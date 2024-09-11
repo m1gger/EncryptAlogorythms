@@ -12,7 +12,7 @@ namespace DamnItShifrWPF.Services
 
         public string Text { get; set; }
         public string Alphabet { get; set; } = "абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
-        public Dictionary<char,char> Dictionary { get; set; }
+        public Dictionary<char,char> Dictionary { get; set; } = new Dictionary<char, char>();
 
         public DictionaryCipherService(string text, string alphabet, string key)
         {
