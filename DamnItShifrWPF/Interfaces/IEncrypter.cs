@@ -9,5 +9,10 @@ namespace DamnItShifrWPF.Interfaces
     public interface  IEncrypter
     {
         string Encrypt();
+
+        string Decrypt();
+
+        (int, string) Hack();
     }
+
 }
