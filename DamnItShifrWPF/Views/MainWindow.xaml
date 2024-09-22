@@ -24,11 +24,17 @@
                 <ComboBoxItem Content="Шифрование с двумя массивами" />
             </ComboBox>
 
-            <!-- Ввод текста для шифрования -->
-            <TextBlock Text="Введите текст:" Margin="0,0,0,10" />
+            <!-- Ввод текста для шифрования с кнопкой "Импорт" -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Введите текст:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <Button Content="Импорт" Width="100" Click="ImportButton_Click" />
+            </StackPanel>
             <TextBox Name="InputTextBox" 
                      Width="350" Height="100" 
-                     TextWrapping="Wrap" Margin="0,0,0,10"/>
+                     TextWrapping="Wrap" 
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto" 
+                     Margin="0,0,0,10"/>
 
             <!-- Ввод ключа шифрования -->
             <TextBlock Text="Введите ключ:" Margin="0,10,0,10" />
@@ -49,9 +55,6 @@
                       Margin="0,10,0,10" />
 
             <!-- Поле для ручного ввода алфавита -->
-       
-
-            <!-- Ввод ключа шифрования -->
             <TextBlock Text="Алфавит:" Margin="0,10,0,10" />
             <TextBox Name="AlphabetTextBox" Width="350" Margin="0,0,0,10"/>
         </StackPanel>
@@ -61,13 +64,20 @@
             <Button Content="Зашифровать" Width="150" Height="40" Margin="0,10" Click="EncryptButton_Click" />
             <Button Content="Расшифровать" Width="150" Height="40" Margin="0,10" Click="DecryptButton_Click" />
             <Button Content="Взломать" Width="150" Height="40" Margin="0,10" Click="HackButton_Click" />
-            <Button Content="Анализировать текст" Width="150" Height="40" Margin="0,10" Click="AnalyzeButton_Click" />
         </StackPanel>
 
-        <!-- Поле для вывода результата -->
+        <!-- Поле для вывода результата с кнопкой "Экспорт" -->
         <StackPanel Grid.Column="0" Margin="0,500,0,0">
-            <TextBlock Text="Результат:" Margin="0,0,0,10" />
-            <TextBox Name="ResultTextBox" Width="350" Height="100" TextWrapping="Wrap" IsReadOnly="True" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Результат:" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <Button Content="Экспорт" Width="100" Click="ExportButton_Click" />
+            </StackPanel>
+            <TextBox Name="ResultTextBox" 
+                     Width="350" Height="100" 
+                     TextWrapping="Wrap" 
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"
+                     IsReadOnly="True"/>
         </StackPanel>
     </Grid>
 </Window>

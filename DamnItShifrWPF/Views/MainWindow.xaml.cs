@@ -3,9 +3,15 @@ using DamnItShifrWPF.Interfaces;
 using DamnItShifrWPF.Services;
 using DamnItShifrWPF.Utils;
 using DamnItShifrWPF.Views;
+using Microsoft.Win32;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
+using DamnItShifrWPF.Models;
+using OxyPlot;
+using OxyPlot.Series;
 
 namespace Views.DamnItShifrWPF
 {
@@ -17,24 +23,8 @@ namespace Views.DamnItShifrWPF
         }
 
         private IEncrypter encrypter;
-
-        private void AnalyzeButton_Click(object sender, RoutedEventArgs e)
-        {
-            string inputText = InputTextBox.Text;
-            var textAnalyzer = new TextAnaliser(inputText);
-
-            var frequencies = textAnalyzer.CalculateFrequencies();
-
-            TextAnaliserWindow analysisWindow = new TextAnaliserWindow();
-            var analysisText = new StringBuilder();
-            foreach (var pair in frequencies)
-            {
-                analysisText.AppendLine($"{pair.Key}: {pair.Value * 100:F2}%");
-            }
-
-            analysisWindow.AnalysisResultTextBlock.Text = analysisText.ToString();
-            analysisWindow.Show();
-        }
+        private TextAnaliserWindow textAnaliserWindow = null;
+        string language;
 
         private void EncryptButton_Click(object sender, RoutedEventArgs e)
         {
@@ -74,6 +64,10 @@ namespace Views.DamnItShifrWPF
 
                     result = ArrayCipher(inputText, key, customAlphabet);
                 }
+
+                // Обновляем окно анализа
+                UpdateAnalysis(inputText, result, selectedMethod);
+
                 ResultTextBox.Text = result;
             }
             catch (ArgumentException ex)
@@ -85,6 +79,77 @@ namespace Views.DamnItShifrWPF
                 MessageBox.Show($"Неизвестная ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+        // Метод для обновления анализа
+        private void UpdateAnalysis(string originalText, string encryptedText, string method)
+        {
+            // Анализ зашифрованного текста
+            var encryptedTextAnalyzer = new TextAnaliser(encryptedText);
+            var frequenciesEncrypted = encryptedTextAnalyzer.CalculateFrequencies();
+
+            // Проверка окна анализа
+            if (textAnaliserWindow == null || !textAnaliserWindow.IsVisible)
+            {
+                textAnaliserWindow = new TextAnaliserWindow();
+                textAnaliserWindow.Show();
+            }
+
+            // Преобразование данных для русского языка (частоты символов русского алфавита)
+            var alphabetFreqList = (language == "ru" ? TextAnaliser.RussianFrequencies : TextAnaliser.EnglishFrequencies)
+                .Select(pair => new KeyValuePair<char, double>(pair.Key, Math.Round(pair.Value * 100, 2)))
+                .ToList();
+
+            // Преобразование данных для зашифрованного текста
+            var encryptedTextFrequencyList = frequenciesEncrypted
+                .Select(pair => new KeyValuePair<char, double>(pair.Key, Math.Round(pair.Value * 100, 2)))
+                .ToList();
+
+            // Обновляем таблицы
+            textAnaliserWindow.OriginalTextFrequencyDataGrid.ItemsSource = alphabetFreqList; // Частоты русского алфавита
+            textAnaliserWindow.EncryptedTextFrequencyDataGrid.ItemsSource = encryptedTextFrequencyList; // Частоты зашифрованного текста
+
+            // Построение общего графика
+            DrawCombinedFrequencyGraph(alphabetFreqList, encryptedTextFrequencyList);
+        }
+
+
+        private void DrawCombinedFrequencyGraph(List<KeyValuePair<char, double>> alphabetFreqList, List<KeyValuePair<char, double>> encryptedTextFrequencyList)
+        {
+            var plotModel = new PlotModel { Title = "Частоты алфавита и зашифрованного текста" };
+
+            var alphabetSeries = new LineSeries { Title = "Частоты алфавита" };
+            var encryptedSeries = new LineSeries { Title = "Частоты зашифрованного текста" };
+
+            int index = 0;
+
+            // Добавляем данные для алфавита
+            foreach (var pair in alphabetFreqList)
+            {
+                alphabetSeries.Points.Add(new DataPoint(index++, pair.Value));
+            }
+
+            index = 0; // Сброс индекса для зашифрованного текста
+
+            // Добавляем данные для зашифрованного текста
+            foreach (var pair in encryptedTextFrequencyList)
+            {
+                encryptedSeries.Points.Add(new DataPoint(index++, pair.Value));
+            }
+
+            plotModel.Series.Add(alphabetSeries);
+            plotModel.Series.Add(encryptedSeries);
+
+            textAnaliserWindow.PlotView.Model = plotModel; // Обновляем график
+        }
+
+
+
+
+
+
+
+
+
 
         private string CaesarCipher(string input, int shift, string alphabet)
         {
@@ -176,11 +241,38 @@ namespace Views.DamnItShifrWPF
             if (selectedAlphabet == "Русский")
             {
                 AlphabetTextBox.Text = AlpahabetRandomiser.GetRussianAlphabet();
+                language = "ru";
+
+
             }
             else if (selectedAlphabet == "Английский")
             {
                 AlphabetTextBox.Text = AlpahabetRandomiser.GetEnglishAlphabet();
+                language = "en";
+
             }
         }
+
+        private void ImportButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            if (openFileDialog.ShowDialog() == true)
+            {
+                InputTextBox.Text = File.ReadAllText(openFileDialog.FileName);
+            }
+        }
+
+        // Обработчик кнопки "Экспорт"
+        private void ExportButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            if (saveFileDialog.ShowDialog() == true)
+            {
+                File.WriteAllText(saveFileDialog.FileName, ResultTextBox.Text);
+            }
+        }
+
     }
 }

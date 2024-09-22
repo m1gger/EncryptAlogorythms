@@ -10,7 +10,7 @@ namespace DamnItShifrWPF.Services
     {
         public string Text { get; set; }
 
-        public Dictionary<char, double> RussianFrequencies { get; set; } = new Dictionary<char, double>
+        public static Dictionary<char, double> RussianFrequencies { get; set; } = new Dictionary<char, double>
         {
             {'о', 0.1097}, {'е', 0.0845}, {'а', 0.0801}, {'и', 0.0735}, {'н', 0.0670},
             {'т', 0.0626}, {'с', 0.0547}, {'р', 0.0473}, {'в', 0.0454}, {'л', 0.0434},
@@ -21,7 +21,7 @@ namespace DamnItShifrWPF.Services
             {'ф', 0.0026}, {'ъ', 0.0004}, {'ё', 0.0004}
          };
 
-        public Dictionary<char, double> EnglishFrequencies { get; set; } = new Dictionary<char, double>
+        public static Dictionary<char, double> EnglishFrequencies { get; set; } = new Dictionary<char, double>
         {
             {'e', 0.1270}, {'t', 0.0906}, {'a', 0.0817}, {'o', 0.0751}, {'i', 0.0697},
             {'n', 0.0675}, {'s', 0.0633}, {'h', 0.0609}, {'r', 0.0599}, {'d', 0.0425},
@@ -67,9 +67,15 @@ namespace DamnItShifrWPF.Services
                 frequencies[key] = frequencies[key] / totalLetters;
             }
 
-            TextFrequencies = frequencies; // Сохраняем результат анализа
-            return frequencies;
+            // Сортируем по убыванию частот
+            var sortedFrequencies = frequencies.OrderByDescending(pair => pair.Value)
+                                               .ToDictionary(pair => pair.Key, pair => pair.Value);
+
+            TextFrequencies = sortedFrequencies; // Сохраняем отсортированный результат анализа
+
+            return sortedFrequencies;
         }
+
 
 
     }
