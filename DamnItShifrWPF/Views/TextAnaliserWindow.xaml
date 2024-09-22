@@ -5,11 +5,11 @@
         Title="Text Analyzer" Height="450" Width="800">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="120" />
             <!-- Ширина таблицы для исходного алфавита -->
             <ColumnDefinition Width="5" />
             <!-- Разделитель -->
-            <ColumnDefinition Width="100" />
+            <ColumnDefinition Width="120" />
             <!-- Ширина таблицы для зашифрованного текста -->
             <ColumnDefinition Width="*" />
             <!-- Пространство для графика -->
@@ -20,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <!-- Подпись для таблицы с частотами алфавита -->
-        <TextBlock Text="алфавит"
+        <TextBlock Text="Алфавит"
                    FontWeight="Bold"
                    HorizontalAlignment="Center"
                    Grid.Column="0"

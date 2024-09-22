@@ -19,9 +19,12 @@ namespace DamnItShifrWPF.Views
     /// </summary>
     public partial class TextAnaliserWindow : Window
     {
+        public bool IsFirstDrawingAlphabet = true;
         public TextAnaliserWindow()
         {
             InitializeComponent();
+
+          
         }
     }
 }
