@@ -109,16 +109,44 @@ namespace Views.DamnItShifrWPF
             textAnaliserWindow.EncryptedTextFrequencyDataGrid.ItemsSource = encryptedTextFrequencyList; // Частоты зашифрованного текста
 
             // Построение общего графика
-            DrawCombinedFrequencyGraph(alphabetFreqList, encryptedTextFrequencyList);
+            DrawCombinedFrequencyGraph(alphabetFreqList, encryptedTextFrequencyList,method);
         }
 
 
-        private void DrawCombinedFrequencyGraph(List<KeyValuePair<char, double>> alphabetFreqList, List<KeyValuePair<char, double>> encryptedTextFrequencyList)
+        private void DrawCombinedFrequencyGraph(List<KeyValuePair<char, double>> alphabetFreqList, List<KeyValuePair<char, double>> encryptedTextFrequencyList, string method)
         {
-            var plotModel = new PlotModel { Title = "Частоты алфавита и зашифрованного текста" };
+            PlotModel plotModel;
 
-            var alphabetSeries = new LineSeries { Title = "Частоты алфавита" };
-            var encryptedSeries = new LineSeries { Title = "Частоты зашифрованного текста" };
+            if (textAnaliserWindow.PlotView.Model == null)
+            {
+                plotModel = new PlotModel { Title = "Частоты алфавита и зашифрованного текста" };
+                textAnaliserWindow.PlotView.Model = plotModel; // Задаем модель, если она не существует
+            }
+            else
+            {
+                plotModel = textAnaliserWindow.PlotView.Model;
+            }
+
+            // Создаем серии для алфавита и зашифрованного текста
+            OxyColor color;
+            switch (method) 
+            {
+                case "Шифр Тритемиуса":
+                    color = OxyColors.Green; break;
+
+                case "Шифрование с двумя массивами":
+                    color = OxyColors.Blue; break;
+                    break;
+                case "Шифр Цезаря":
+                    color = OxyColors.Orange; break;
+
+                default : color = OxyColors.Black;
+                    break;
+
+            }
+            var alphabetSeries = new LineSeries { Title = "Частоты алфавита", Color = OxyColors.Red };
+            var encryptedSeries = new LineSeries { Title = $"Частоты {method}",Color=color };
+            
 
             int index = 0;
 
@@ -136,11 +164,14 @@ namespace Views.DamnItShifrWPF
                 encryptedSeries.Points.Add(new DataPoint(index++, pair.Value));
             }
 
+            // Добавляем новые серии в модель графика
             plotModel.Series.Add(alphabetSeries);
             plotModel.Series.Add(encryptedSeries);
 
-            textAnaliserWindow.PlotView.Model = plotModel; // Обновляем график
+            // Принудительная перерисовка графика
+            textAnaliserWindow.PlotView.InvalidatePlot(true);
         }
+
 
 
 
