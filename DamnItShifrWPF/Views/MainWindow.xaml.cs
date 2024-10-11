@@ -23,6 +23,7 @@ namespace Views.DamnItShifrWPF
         }
 
         private IEncrypter encrypter;
+        private IHacker hacker;
         private TextAnaliserWindow textAnaliserWindow = null;
         string language;
 
@@ -180,8 +181,6 @@ namespace Views.DamnItShifrWPF
 
 
 
-
-
         private string CaesarCipher(string input, int shift, string alphabet)
         {
             try
@@ -254,9 +253,9 @@ namespace Views.DamnItShifrWPF
             }
         }
 
-        private (int, string) HackEncryptedText()
+        private (string, string) HackEncryptedText()
         {
-            return encrypter?.Hack() ?? (0, "Ошибка: нет данных для взлома.");
+            return hacker?.Hack() ?? ("0", "Ошибка: нет данных для взлома.");
         }
 
         private void HackButton_Click(object sender, RoutedEventArgs e)
@@ -273,8 +272,7 @@ namespace Views.DamnItShifrWPF
             {
                 AlphabetTextBox.Text = AlpahabetRandomiser.GetRussianAlphabet();
                 language = "ru";
-
-
+               
             }
             else if (selectedAlphabet == "Английский")
             {
