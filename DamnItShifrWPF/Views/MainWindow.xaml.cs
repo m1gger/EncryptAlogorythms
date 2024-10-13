@@ -40,6 +40,7 @@ namespace Views.DamnItShifrWPF
             string result = string.Empty;
 
             var factory = new EncryptorFactory();
+            
 
             try
             {
@@ -74,6 +75,7 @@ namespace Views.DamnItShifrWPF
 
                     case CipherTypeEnum.HillCipher:
                         // Логика для шифра Хилла (если требуется)
+                        MatrixSize = int.Parse(key);
                         result = HillCipher(inputText, int.Parse(key), customAlphabet);
                         break;
 
@@ -338,12 +340,15 @@ namespace Views.DamnItShifrWPF
                 case CipherTypeEnum.HillCipher:
                  
                     hacker=HackerFactory.CreateHacker(CipherTypeEnum.HillCipher,encrypter);
+                    return hacker?.Hack(MatrixSize) ?? ("0", "Ошибка: нет данных для взлома.");
                     break;
                 case CipherTypeEnum.CaesarCipher:
                     hacker = HackerFactory.CreateHacker(CipherTypeEnum.CaesarCipher, encrypter);
+                    return hacker?.Hack() ?? ("0", "Ошибка: нет данных для взлома.");
                     break;
                 default:
-                    break;
+                    return hacker?.Hack() ?? ("0", "Ошибка: нет данных для взлома.");
+                    
             }
             return hacker?.Hack() ?? ("0", "Ошибка: нет данных для взлома.");
         }

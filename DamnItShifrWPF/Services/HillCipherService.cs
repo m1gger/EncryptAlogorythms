@@ -9,6 +9,7 @@ using MathNetLinAlg = MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 using MathNet.Numerics.LinearAlgebra;
 using DamnItShifrWPF.Utils;
+using System.Windows;
 
 namespace DamnItShifrWPF.Services
 {
@@ -31,6 +32,8 @@ namespace DamnItShifrWPF.Services
             }
             Text = text.ToLower();
             MatrixOfKey = matrix;
+            var strmatrix= MatrixOfKey.Transpose().ToMatrixString(5, 5);
+            MessageBox.Show(strmatrix);
         }
 
         public  string Encrypt()

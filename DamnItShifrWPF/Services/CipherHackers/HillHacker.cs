@@ -22,8 +22,9 @@ namespace DamnItShifrWPF.Services.CipherHackers
         public (string, string) Hack(int size)
         {
             // Предположим, что известные фрагменты одинаковой длины
-            string ketString = CalculateMatrixOfKey(Encrypter.Text,Encrypter.EncryptedText,size).Transpose().ToMatrixString(size, size);
-            string dectyptedtext = null;
+            var keymatrix = CalculateMatrixOfKey(Encrypter.Text, Encrypter.EncryptedText, size);
+            string ketString = keymatrix.Transpose().ToMatrixString(size, size);
+            string dectyptedtext = DecryptWithKey(keymatrix);
 
             return (ketString, dectyptedtext);
         }
