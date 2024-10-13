@@ -15,7 +15,7 @@ namespace DamnItShifrWPF.Services.CipherHackers
         {
             Encrypter = encrypter;
         }
-        public (string, string) Hack(params string[] parametrs)
+        public (string, string) Hack(int size=-1)
         {
             string originalEncryptedText = Encrypter.EncryptedText.ToLower();  // Работать с исходным зашифрованным текстом
             string bestAttempt = string.Empty;

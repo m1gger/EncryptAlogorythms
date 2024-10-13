@@ -16,13 +16,16 @@
                        FontSize="16" Margin="0,10,0,20" />
 
             <!-- Выпадающий список для выбора шифра -->
-            <ComboBox Name="CipherMethodComboBox" 
-                      HorizontalAlignment="Center" 
-                      Width="250" Margin="0,0,0,20">
+            <ComboBox Name="CipherMethodComboBox"
+          HorizontalAlignment="Center"
+          Width="250" Margin="0,0,0,20"
+          SelectionChanged="CipherMethodComboBox_SelectionChanged">
                 <ComboBoxItem Content="Шифр Цезаря" />
                 <ComboBoxItem Content="Шифр Тритемиуса" />
                 <ComboBoxItem Content="Шифрование с двумя массивами" />
+                <ComboBoxItem Content="Шифр Хилла" />
             </ComboBox>
+
 
             <!-- Ввод текста для шифрования с кнопкой "Импорт" -->
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
@@ -37,7 +40,7 @@
                      Margin="0,0,0,10"/>
 
             <!-- Ввод ключа шифрования -->
-            <TextBlock Text="Введите ключ:" Margin="0,10,0,10" />
+            <TextBlock Name="KeyTextBlock" Text="Введите ключ:" Margin="0,10,0,10" />
             <TextBox Name="KeyTextBox" Width="350" Margin="0,0,0,10"/>
 
             <!-- Выпадающий список для выбора алфавита -->

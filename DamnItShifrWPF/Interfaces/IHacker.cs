@@ -8,7 +8,7 @@ namespace DamnItShifrWPF.Interfaces
 {
     public interface IHacker
     {
-        (string, string) Hack( params string[] text);
+        (string, string) Hack(int matrixSize=-1);
 
     }
 }

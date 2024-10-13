@@ -1,4 +1,7 @@
 ﻿using DamnItShifrWPF.Interfaces;
+using DamnItShifrWPF.Utils;
+using MathNet.Numerics.LinearAlgebra;
+using MathNetLinAlg = MathNet.Numerics.LinearAlgebra;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,150 +19,95 @@ namespace DamnItShifrWPF.Services.CipherHackers
             Encrypter = encrypter;
         }
 
-        public (string , string ) Hack(params string[] fragments)
+        public (string, string) Hack(int size)
         {
             // Предположим, что известные фрагменты одинаковой длины
-            if (fragments.Length < 2)
-                throw new ArgumentException("Необходимо минимум два фрагмента для взлома.");
+            string ketString = CalculateMatrixOfKey(Encrypter.Text,Encrypter.EncryptedText,size).Transpose().ToMatrixString(size, size);
+            string dectyptedtext = null;
 
-            string knownFragment = fragments[0]; // Используем первый фрагмент как известный
-            string encryptedFragment = fragments[1]; // Используем второй фрагмент как зашифрованный
-
-            // Предполагаем, что длина фрагментов соответствует размеру матрицы
-            int matrixSize = (int)Math.Sqrt(knownFragment.Length);
-
-            var knownVector = ConvertToVector(knownFragment);
-            var encryptedVector = ConvertToVector(encryptedFragment);
-
-            // Создание матрицы из известного фрагмента
-            var matrix = CreateMatrix(knownVector, encryptedVector, matrixSize);
-
-            // Восстановление ключа
-            var keyMatrix = InvertMatrix(matrix);
-
-            // Дешифровка с использованием ключа
-            var decryptedText = DecryptWithKey(keyMatrix, knownFragment.Length);
-
-            // Преобразование ключа обратно в строку
-            var keyString = ConvertMatrixToString(keyMatrix, matrixSize);
-
-            return (keyString, decryptedText);
+            return (ketString, dectyptedtext);
         }
 
-        private int[,] CreateMatrix(int[] knownVector, int[] encryptedVector, int size)
+        private string PrepareTextToEncrypting(string original, int length, int startIndex = 0)
         {
-            var matrix = new int[size, size];
-            for (int i = 0; i < size; i++)
+            var text = "";
+            var symbolsInAlphabet = original.Where(x => Encrypter.Alphabet.Contains(x)).ToArray();
+            for (int i = startIndex; i < Math.Min(length + startIndex, symbolsInAlphabet.Length); i++)
             {
-                for (int j = 0; j < size; j++)
-                {
-                    matrix[i, j] = knownVector[i * size + j]; // Заполнение матрицы
-                }
+                text += symbolsInAlphabet[i];
             }
-            return matrix;
+            return text;
         }
 
-        private int[,] InvertMatrix(int[,] matrix)
+        private  Matrix<double> CalculateMatrixOfKey(string originalText, string encryptedText, int size)
         {
-            int size = matrix.GetLength(0);
-            int[,] augmentedMatrix = new int[size, size * 2];
-
-            // Создание расширенной матрицы
-            for (int i = 0; i < size; i++)
+            Matrix<double> matrixX, matrixY;
+            string originalTextPortion, encryptedTextPortion;
+            var i = 0;
+            do
             {
-                for (int j = 0; j < size; j++)
-                {
-                    augmentedMatrix[i, j] = matrix[i, j];
-                }
-                augmentedMatrix[i, i + size] = 1; // Добавление единичной матрицы
+                originalTextPortion = PrepareTextToEncrypting(originalText, size * size, i);
+                encryptedTextPortion = PrepareTextToEncrypting(encryptedText, size * size, i);
+
+                matrixX = MatrixHelper.GetMatrixFromString(originalTextPortion,Encrypter.Alphabet);
+                matrixY = MatrixHelper.GetMatrixFromString(encryptedTextPortion, Encrypter.Alphabet);
+
+                i++;
+
+            } while (!MatrixHelper.CheckConstraints(matrixX, Encrypter.Alphabet));
+
+            return MatrixHelper.Inverse(matrixX,Encrypter.Alphabet.Length).Multiply(matrixY).Modulus(Encrypter.Alphabet.Length);
+
+
+        }
+
+        private string DecryptWithKey(Matrix<double>  MatrixOfKey)
+        {
+            // Проверяем, что матрица обратима
+            if (MatrixOfKey.Determinant() == 0)
+            {
+                throw new InvalidOperationException("Матрица ключа необратима.");
             }
 
-            // Применение метода Гаусса-Жордана для инверсии
-            for (int i = 0; i < size; i++)
+            // Вычисляем обратную матрицу по модулю размера алфавита
+            var mod = Encrypter.Alphabet.Length;
+            var inverseMatrix = MatrixHelper.Inverse(MatrixOfKey, mod); // Получаем обратную матрицу
+
+            var inputText = Encrypter.EncryptedText.ToLower();
+            var outputText = new StringBuilder(); // Используем StringBuilder для производительности
+            var portionSize = MatrixOfKey.RowCount;
+
+            // Проверяем длину зашифрованного текста
+            if (inputText.Length % portionSize != 0)
             {
-                // Нормализация строки
-                int divisor = augmentedMatrix[i, i];
-                int divisorInverse = ModularInverse(divisor, 26); // Вычисляем обратный элемент
-                if (divisorInverse == -1)
-                {
-                    throw new InvalidOperationException("Матрица не имеет обратной, так как определитель равен 0.");
-                }
+                throw new ArgumentException("Длина зашифрованного текста должна быть кратна размеру матрицы.");
+            }
 
-                for (int j = 0; j < size * 2; j++)
-                {
-                    augmentedMatrix[i, j] = (augmentedMatrix[i, j] * divisorInverse) % 26; // Нормализуем строку
-                }
+            for (int i = 0; i < inputText.Length; i += portionSize)
+            {
+                var portion = inputText.Substring(i, portionSize);
+                var arrayOfIndexes = portion.Select(x => (double)Encrypter.Alphabet.IndexOf(x)).ToArray();
 
-                // Обнуление остальных элементов в столбце
-                for (int k = 0; k < size; k++)
+                var vector = MathNetLinAlg.Vector<double>.Build.DenseOfArray(arrayOfIndexes);
+
+                // Умножаем вектор на обратную матрицу
+                var resultVector = inverseMatrix * vector;
+
+                foreach (var elem in resultVector)
                 {
-                    if (k != i)
+                    // Приводим к индексу в алфавите по модулю
+                    int index = (int)Math.Floor(elem) % mod; // Или Math.Ceiling
+                    if (index < 0)
                     {
-                        int factor = augmentedMatrix[k, i];
-                        for (int j = 0; j < size * 2; j++)
-                        {
-                            augmentedMatrix[k, j] = (augmentedMatrix[k, j] - factor * augmentedMatrix[i, j]) % 26;
-                            if (augmentedMatrix[k, j] < 0) augmentedMatrix[k, j] += 26; // Обработка отрицательных значений
-                        }
+                        index += mod; // Корректируем индекс
                     }
+                    outputText.Append(Encrypter.Alphabet[index]);
                 }
             }
 
-            // Извлечение инвертированной матрицы
-            int[,] invertedMatrix = new int[size, size];
-            for (int i = 0; i < size; i++)
-            {
-                for (int j = 0; j < size; j++)
-                {
-                    invertedMatrix[i, j] = augmentedMatrix[i, j + size]; // Берем правую половину
-                }
-            }
-
-            return invertedMatrix;
+            return outputText.ToString(); // Преобразуем StringBuilder в строку
         }
 
-        // Функция для нахождения модульного обратного элемента
-        private int ModularInverse(int a, int m)
-        {
-            a = a % m;
-            for (int x = 1; x < m; x++)
-            {
-                if ((a * x) % m == 1)
-                {
-                    return x;
-                }
-            }
-            return -1; // Обратного элемента не существует
-        }
-
-
-        private string DecryptWithKey(int[,] key, int length)
-        {
-            // Дешифровка текста с использованием ключа
-            // Заглушка, просто возвращаем пустую строку
-            return ""; // Замените на фактическую логику дешифровки
-        }
-
-        private int[] ConvertToVector(string fragment)
-        {
-            // Преобразование строки в вектор чисел (например, A=0, B=1, C=2, и т.д.)
-            return fragment.Select(c => c - 'A').ToArray(); // Пример для английского алфавита
-        }
-
-        private string ConvertMatrixToString(int[,] matrix, int size)
-        {
-            var result = new StringBuilder();
-            for (int i = 0; i < size; i++)
-            {
-                for (int j = 0; j < size; j++)
-                {
-                    result.Append((char)(matrix[i, j] + 'A')); // Преобразуем обратно в символы
-                }
-            }
-            return result.ToString();
-
-            кто запретил тот гей 
-        }
 
     }
 }

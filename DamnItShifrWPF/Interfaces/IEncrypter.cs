@@ -12,6 +12,8 @@
           
             string Alphabet { get; set; }
 
+            string Text { get; set; }
+
             string Encrypt();
 
             string Decrypt();

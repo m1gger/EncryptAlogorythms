@@ -12,6 +12,7 @@ using System.Security.Cryptography.X509Certificates;
 using DamnItShifrWPF.Models;
 using OxyPlot;
 using OxyPlot.Series;
+using System.Windows.Input;
 
 namespace Views.DamnItShifrWPF
 {
@@ -24,7 +25,9 @@ namespace Views.DamnItShifrWPF
 
         private IEncrypter encrypter;
         private IHacker hacker;
+        private CipherTypeEnum CipherType;
         private TextAnaliserWindow textAnaliserWindow = null;
+        public int MatrixSize=-1;
         string language;
 
         private void EncryptButton_Click(object sender, RoutedEventArgs e)
@@ -40,31 +43,45 @@ namespace Views.DamnItShifrWPF
 
             try
             {
-                if (selectedMethod == "Шифр Цезаря")
-                {
-                    result = CaesarCipher(inputText, int.Parse(key), customAlphabet);
-                }
-                else if (selectedMethod == "Шифр Тритемиуса")
-                {
-                    result = TrithemiusCipher(inputText, key, customAlphabet);
-                }
-                else if (selectedMethod == "Шифрование с двумя массивами")
-                {
-                    if (string.IsNullOrEmpty(customAlphabet))
-                    {
-                        throw new ArgumentException("Пользовательский алфавит не может быть пустым для метода шифрования с двумя массивами.");
-                    }
 
-                    string alphabetToUse = useRandomAlphabet ? AlpahabetRandomiser.RandomiseAlphabet(customAlphabet) : customAlphabet;
+                switch (CipherType)
+                {
+                    case CipherTypeEnum.CaesarCipher:
+                        result = CaesarCipher(inputText, int.Parse(key), customAlphabet);
+                        break;
 
-                    if (useRandomAlphabet)
-                    {
-                        KeyTextBox.Text = alphabetToUse;
-                        key = alphabetToUse;
-                    }
+                    case CipherTypeEnum.TrithemiusCipher:
+                        result = TrithemiusCipher(inputText, key, customAlphabet);
+                        break;
 
-                    result = ArrayCipher(inputText, key, customAlphabet);
+                    case CipherTypeEnum.DictionaryCipher:
+                        if (string.IsNullOrEmpty(customAlphabet))
+                        {
+                            throw new ArgumentException("Пользовательский алфавит не может быть пустым для метода шифрования с двумя массивами.");
+                        }
+
+                        // Используем случайный алфавит, если выбран
+                        string alphabetToUse = useRandomAlphabet ? AlpahabetRandomiser.RandomiseAlphabet(customAlphabet) : customAlphabet;
+
+                        if (useRandomAlphabet)
+                        {
+                            KeyTextBox.Text = alphabetToUse;  // Отображаем алфавит в TextBox
+                            key = alphabetToUse;
+                        }
+
+                        result = ArrayCipher(inputText, key, customAlphabet);
+                        break;
+
+                    case CipherTypeEnum.HillCipher:
+                        // Логика для шифра Хилла (если требуется)
+                        result = HillCipher(inputText, int.Parse(key), customAlphabet);
+                        break;
+
+                    default:
+                        throw new InvalidOperationException("Неизвестный тип шифра.");
                 }
+
+
 
                 // Обновляем окно анализа
                 UpdateAnalysis(inputText, result, selectedMethod);
@@ -80,6 +97,47 @@ namespace Views.DamnItShifrWPF
                 MessageBox.Show($"Неизвестная ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
+
+        private void CipherMethodComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Получаем выбранный элемент
+            var selectedComboBoxItem = CipherMethodComboBox.SelectedItem as ComboBoxItem;
+
+            if (selectedComboBoxItem != null)
+            {
+                // Получаем текст выбранного элемента
+                string selectedMethod = selectedComboBoxItem.Content.ToString();
+
+                // В зависимости от выбора устанавливаем значение поля класса и изменяем текст в TextBlock
+                switch (selectedMethod)
+                {
+                    case "Шифр Цезаря":
+                        CipherType = CipherTypeEnum.CaesarCipher;
+                        KeyTextBlock.Text = "Введите ключ:"; // Изменяем текст на "Введите ключ"
+                        break;
+                    case "Шифр Тритемиуса":
+                        CipherType = CipherTypeEnum.TrithemiusCipher;
+                        KeyTextBlock.Text = "Введите ключевое слово:"; // Изменяем текст на "Введите ключ"
+                        break;
+                    case "Шифрование с двумя массивами":
+                        CipherType = CipherTypeEnum.DictionaryCipher;
+                        KeyTextBlock.Text = "Введите алфавит для шифрования:"; // Изменяем текст на "Введите ключ"
+                        break;
+                    case "Шифр Хилла":
+                        CipherType = CipherTypeEnum.HillCipher;
+                        KeyTextBlock.Text = "Введите размер матрицы:";
+                        // Изменяем текст на "Введите размер матрицы"
+                        break;
+                    default:
+                        CipherType = CipherTypeEnum.None;
+                        KeyTextBlock.Text = "Введите ключ:"; // Возвращаем текст на "Введите ключ"
+                        break;
+                }
+            }
+        }
+
+
 
         // Метод для обновления анализа
         private void UpdateAnalysis(string originalText, string encryptedText, string method)
@@ -241,6 +299,26 @@ namespace Views.DamnItShifrWPF
             }
         }
 
+        private string HillCipher(string text, int matrixsize, string alphabet) 
+        {
+            try
+            {
+                var factory = new EncryptorFactory();
+                encrypter = factory.CreateHillCipher(text, matrixsize, alphabet);
+                return encrypter.Encrypt();
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"Ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Неизвестная ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return string.Empty;
+            }
+        }
+
         private void DecryptButton_Click(object sender, RoutedEventArgs e)
         {
             if (encrypter != null)
@@ -255,6 +333,18 @@ namespace Views.DamnItShifrWPF
 
         private (string, string) HackEncryptedText()
         {
+            switch (CipherType) 
+            {
+                case CipherTypeEnum.HillCipher:
+                 
+                    hacker=HackerFactory.CreateHacker(CipherTypeEnum.HillCipher,encrypter);
+                    break;
+                case CipherTypeEnum.CaesarCipher:
+                    hacker = HackerFactory.CreateHacker(CipherTypeEnum.CaesarCipher, encrypter);
+                    break;
+                default:
+                    break;
+            }
             return hacker?.Hack() ?? ("0", "Ошибка: нет данных для взлома.");
         }
 

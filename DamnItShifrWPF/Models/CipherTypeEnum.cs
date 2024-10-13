@@ -12,5 +12,6 @@ namespace DamnItShifrWPF.Models
         TrithemiusCipher,
         HillCipher,
         DictionaryCipher,
+        None
     }
 }
