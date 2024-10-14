@@ -1,18 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
 
-namespace DamnItShifrWPF.Interfaces
-{
-    public interface  IEncrypter
+    namespace DamnItShifrWPF.Interfaces
     {
-        string Encrypt();
+        public interface  IEncrypter
+        {
+            string EncryptedText { get; set; }
+          
+            string Alphabet { get; set; }
 
-        string Decrypt();
+            string Text { get; set; }
 
-        (int, string) Hack();
+            string Encrypt();
+
+            string Decrypt();
+        }
+
     }
-
-}
