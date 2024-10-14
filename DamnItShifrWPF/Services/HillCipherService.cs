@@ -32,7 +32,7 @@ namespace DamnItShifrWPF.Services
             }
             Text = text.ToLower();
             MatrixOfKey = matrix;
-            var strmatrix= MatrixOfKey.Transpose().ToMatrixString(5, 5);
+            var strmatrix= MatrixOfKey.Transpose().ToMatrixString(MatrixOfKey.ColumnCount, MatrixOfKey.ColumnCount);
             MessageBox.Show(strmatrix);
         }
 

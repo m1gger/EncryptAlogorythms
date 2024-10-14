@@ -20,7 +20,7 @@ namespace DamnItShifrWPF.Utils
 
             while (matrixDet < 0)
             {
-                matrixDet += 26;
+                matrixDet += 33;
             }
 
             for (int i = 0; i < matrix.RowCount; i++)
@@ -39,7 +39,7 @@ namespace DamnItShifrWPF.Utils
                     {
                         insertedValue += mod;
                     }
-                    outputMatrix.At(j, i, Math.Round(insertedValue / matrixDet) % 26);
+                    outputMatrix.At(j, i, Math.Round(insertedValue / matrixDet) % 33);
                 }
             }
             return (Matrix)outputMatrix;
@@ -72,7 +72,7 @@ namespace DamnItShifrWPF.Utils
 
         public static Matrix<double> GetRandomMatrix(int size)
         {
-            if (size < 0 || size > 5) return null;
+            if (size < 0 ) return null;
 
             var outputMatrix = DenseMatrix.CreateRandom(size, size, new Chi(100));
 
@@ -87,21 +87,39 @@ namespace DamnItShifrWPF.Utils
             return outputMatrix;
         }
 
-        public static Matrix<double> GetMatrixFromString(string text,string alphabet)
+        public static Matrix<double> GetMatrixFromString(string text, string alphabet)
         {
+            // Убедимся, что длина текста достаточна для формирования матрицы
+            if (text.Length == 0)
+            {
+                throw new ArgumentException("Текст не может быть пустым.");
+            }
+
             var size = (int)Math.Sqrt(text.Length);
-            // var size = int.Parse(Math.Sqrt(text.Length).ToString());
-            var matrix = DenseMatrix.Build.DenseDiagonal(size, size, 0);
+            if (size * size > text.Length)
+            {
+                throw new ArgumentException("Длина текста должна быть квадратом целого числа.");
+            }
+
+            var matrix = DenseMatrix.Build.Dense(size, size);
 
             for (int i = 0; i < size; i++)
             {
                 for (int j = 0; j < size; j++)
                 {
-                    matrix.At(i, j, alphabet.IndexOf(text[i * size + j]));
+                    // Получаем индекс символа в алфавите
+                    int index = alphabet.IndexOf(text[i * size + j]);
+                    if (index == -1)
+                    {
+                        throw new ArgumentException($"Символ '{text[i * size + j]}' не найден в алфавите.");
+                    }
+
+                    matrix.At(i, j, index);
                 }
             }
 
             return matrix;
         }
+
     }
 }

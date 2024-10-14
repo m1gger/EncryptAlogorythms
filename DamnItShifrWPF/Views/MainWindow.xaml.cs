@@ -25,6 +25,7 @@ namespace Views.DamnItShifrWPF
 
         private IEncrypter encrypter;
         private IHacker hacker;
+        
         private CipherTypeEnum CipherType;
         private TextAnaliserWindow textAnaliserWindow = null;
         public int MatrixSize=-1;
