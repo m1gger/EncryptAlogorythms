@@ -22,12 +22,12 @@ namespace DamnItShifrWPF.Services.CipherHackers
         {
             // Предположим, что известные фрагменты одинаковой длины
             var keymatrix = CalculateMatrixOfKey(Encrypter.Text, Encrypter.EncryptedText, size);
-           string keyString = keymatrix.Transpose().ToMatrixString(size, size);
+           string keyString = keymatrix.ToMatrixString(size, size);
             string decryptedtext = DecryptWithKey(keymatrix.Transpose());
             
-            MessageBox.Show(keyString);
+            //MessageBox.Show(keyString);
             
-            return ("хуй", decryptedtext);
+            return (keyString, decryptedtext);
         }
 
       
@@ -63,22 +63,27 @@ namespace DamnItShifrWPF.Services.CipherHackers
             return MatrixHelper.Inverse(matrixX, Encrypter.Alphabet.Length).Multiply(matrixY).Modulus(Encrypter.Alphabet.Length);
         }
 
-        private string DecryptWithKey(Matrix<double> matrixOfKey)
+        public string DecryptWithKey(Matrix<double> matrixOfKey)
         {
+            // Проверяем, что матрица обратима
             if (matrixOfKey.Determinant() == 0)
             {
                 throw new InvalidOperationException("Матрица ключа необратима.");
             }
 
+            // Вычисляем обратную матрицу по модулю размера алфавита
             var mod = Encrypter.Alphabet.Length;
-            var inverseMatrix = MatrixHelper.Inverse(matrixOfKey, mod);
+            var inverseMatrix = MatrixHelper.Inverse(matrixOfKey, mod); // Получаем обратную матрицу
+
             var inputText = Encrypter.EncryptedText.ToLower();
-            var outputText = new StringBuilder();
+            var outputText = new StringBuilder(); // Используем StringBuilder для производительности
             var portionSize = matrixOfKey.RowCount;
 
+            // Проверяем длину зашифрованного текста
             if (inputText.Length % portionSize != 0)
             {
-                throw new ArgumentException("Длина зашифрованного текста должна быть кратна размеру матрицы.");
+                // Если длина не кратна размеру матрицы, добавляем символы-заполнители
+                inputText = inputText.PadRight((inputText.Length / portionSize + 1) * portionSize, 'x');
             }
 
             for (int i = 0; i < inputText.Length; i += portionSize)
@@ -87,16 +92,20 @@ namespace DamnItShifrWPF.Services.CipherHackers
                 var arrayOfIndexes = portion.Select(x => (double)Encrypter.Alphabet.IndexOf(x)).ToArray();
 
                 var vector = MathNetLinAlg.Vector<double>.Build.DenseOfArray(arrayOfIndexes);
+
+                // Умножаем вектор на обратную матрицу
                 var resultVector = inverseMatrix * vector;
 
                 foreach (var elem in resultVector)
                 {
-                    int index = ((int)Math.Floor(elem) % mod + mod) % mod;
+                    // Приводим к индексу в алфавите по модулю
+                    int index = ((int)Math.Floor(elem) % mod + mod) % mod; // Корректируем индекс по модулю
                     outputText.Append(Encrypter.Alphabet[index]);
                 }
             }
 
-            return outputText.ToString();
+            return outputText.ToString(); // Преобразуем StringBuilder в строку
         }
+
     }
 }
