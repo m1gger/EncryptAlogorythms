@@ -72,20 +72,22 @@ namespace DamnItShifrWPF.Utils
 
         public static Matrix<double> GetRandomMatrix(int size)
         {
-            if (size < 0 ) return null;
+            if (size <= 0) return null;
 
-            var outputMatrix = DenseMatrix.CreateRandom(size, size, new Chi(100));
+            int alphabetLength = 32;  // Модуль алфавита — 33 буквы в русском алфавите
+            var random = new Random();
 
-            for (int i = 0; i < size; i++)
+            // Генерируем матрицу с числами от 0 до 32
+            var outputMatrix = DenseMatrix.Create(size, size, (i, j) =>
             {
-                for (int j = 0; j < size; j++)
-                {
-                    outputMatrix.At(i, j, Math.Round(outputMatrix.At(i, j), 0));
-                }
-            }
+                // Генерируем случайное число в диапазоне от 0 до alphabetLength - 1
+                var randomValue = random.Next(0, alphabetLength);
+                return randomValue;  // Возвращаем случайное неотрицательное число
+            });
 
             return outputMatrix;
         }
+
 
         public static Matrix<double> GetMatrixFromString(string text, string alphabet)
         {
